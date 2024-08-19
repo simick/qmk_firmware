@@ -3,7 +3,20 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include QMK_KEYBOARD_H
 
+// Helper macros
 #define IS_MACOS !keymap_config.swap_lctl_lgui
+
+#define MT_LSHF_PAR MT(MOD_LSFT, KC_LPRN)
+#define MT_RSHF_PAR MT(MOD_RSFT, KC_RPRN)
+#define MT_LGUI_CBR MT(MOD_LGUI, KC_LCBR)
+#define MT_RGUI_CBR MT(MOD_RGUI, KC_RCBR)
+#define MT_LALT_BRC MT(MOD_LALT, KC_RBRC)
+#define MT_RALT_BRC MT(MOD_RALT, KC_LBRC)
+#define MT_LCTL_QUT MT(MOD_LCTL, KC_QUOT)
+#define MT_RCTL_QUT MT(MOD_RCTL, KC_DQT)
+
+// mod-tap MEH + Ctrl-X (Tmux prefix)
+#define MT_MEH_TMUX MT(MOD_MEH, C(KC_X))
 
 // {{{ Definitions
 enum sofle_layers {
@@ -19,38 +32,6 @@ enum custom_keycodes {
     KC_LEND,
     KC_LOCK
 };
-
-// tap dance definitions
-typedef enum {
-    TD_NONE,
-    TD_UNKNOWN,
-    TD_SINGLE_TAP,
-    TD_SINGLE_HOLD,
-    TD_DOUBLE_TAP,
-    TD_DOUBLE_HOLD,
-    TD_DOUBLE_SINGLE_TAP, // Send two single taps
-    TD_TRIPLE_TAP,
-    TD_TRIPLE_HOLD
-} td_state_t;
-
-typedef struct {
-    bool is_press_action;
-    td_state_t state;
-} td_tap_t;
-
-// Tap dance enums
-enum {
-    TD_LS, // super shift left
-    TD_RS // super shift right
-};
-
-td_state_t cur_dance(tap_dance_state_t *state);
-
-// For the x tap dance. Put it here so it can be used in any keymap
-void lsh_finished(tap_dance_state_t *state, void *user_data);
-void lsh_reset(tap_dance_state_t *state, void *user_data);
-void rsh_finished(tap_dance_state_t *state, void *user_data);
-void rsh_reset(tap_dance_state_t *state, void *user_data);
 
 // }}}
 
@@ -73,11 +54,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 
     [_BASE] = LAYOUT(
-        KC_ESC ,     KC_1 ,    KC_2 ,    KC_3 ,    KC_4 ,    KC_5 ,                         KC_6 ,    KC_7 ,    KC_8 ,    KC_9 ,    KC_0 , KC_BSPC ,
-        KC_TAB ,     KC_Q ,    KC_W ,    KC_E ,    KC_R ,    KC_T ,                         KC_Y ,    KC_U ,    KC_I ,    KC_O ,    KC_P ,  KC_GRV ,
-        KC_BSLS ,    KC_A ,    KC_S ,    KC_D ,    KC_F ,    KC_G ,                         KC_H ,    KC_J ,    KC_K ,    KC_L , KC_SCLN , KC_QUOT ,
-        TD(TD_LS),    KC_Z ,   KC_X ,    KC_C ,    KC_V ,    KC_B ,  KC_MUTE , KC_LOCK ,    KC_N ,    KC_M , KC_COMM ,  KC_DOT , KC_SLSH , TD(TD_RS),
-                            KC_LGUI , KC_LALT , KC_LCTL , TT(_RAISE),   KC_SPC ,  KC_ENT ,  KC_MEH , KC_RCTL , KC_RALT , KC_RGUI
+        KC_ESC ,      KC_1 ,        KC_2 ,        KC_3 ,        KC_4 ,      KC_5 ,                            KC_6 ,        KC_7 ,        KC_8 ,        KC_9 ,    KC_0 , KC_BSPC ,
+        KC_TAB ,      KC_Q ,        KC_W ,        KC_E ,        KC_R ,      KC_T ,                            KC_Y ,        KC_U ,        KC_I ,        KC_O ,    KC_P ,  KC_GRV ,
+        KC_BSLS ,     KC_A ,        KC_S ,        KC_D ,        KC_F ,      KC_G ,                            KC_H ,        KC_J ,        KC_K ,        KC_L , KC_SCLN , KC_QUOT ,
+        MT_LSHF_PAR , KC_Z ,        KC_X ,        KC_C ,        KC_V ,      KC_B , KC_MUTE , KC_LOCK ,        KC_N ,        KC_M ,     KC_COMM ,      KC_DOT , KC_SLSH , MT_RSHF_PAR,
+                             MT_LGUI_CBR , MT_LALT_BRC , MT_LCTL_QUT , TT(_RAISE),  KC_SPC ,  KC_ENT , MT_MEH_TMUX , MT_RCTL_QUT , MT_RALT_BRC , MT_RGUI_CBR
     ),
     /* RAISE
  * ,-----------------------------------------.                    ,-----------------------------------------.
@@ -87,18 +68,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |      |  F11 |  F12 |  F13 |  F14 |  F15 |-------.    ,-------| Left | Down |  Up  | Rght |   -  |   _  |
  * |------+------+------+------+------+------|  MUTE |    |  LOCK |------+------+------+------+------+------|
- * |LShift|      |      |      |      |      |-------|    |-------|   [  |   ]  |   {  |   }  |      |RShift|
+ * | Caps |      |      |      |      |      |-------|    |-------|   [  |   ]  |   {  |   }  |      | Caps |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
  *            | LGUI | LAlt | LCTR |RAISE | /Space  /       \Enter \  |MACWIN| RCTR | RAlt | RGUI |
  *            |      |      |      |      |/       /         \      \ |      |      |      |      |
  *            `----------------------------------'           '------''---------------------------'
  */
     [_RAISE] = LAYOUT(
-        _______ ,   KC_F1 ,   KC_F2 ,   KC_F3 ,   KC_F4 ,   KC_F5 ,                     KC_HOME , KC_PGDN , KC_PGUP ,  KC_END ,  KC_INS ,  KC_DEL ,
+        CG_TOGG ,   KC_F1 ,   KC_F2 ,   KC_F3 ,   KC_F4 ,   KC_F5 ,                     KC_HOME , KC_PGDN , KC_PGUP ,  KC_END ,  KC_INS ,  KC_DEL ,
         _______ ,   KC_F6 ,   KC_F7 ,   KC_F8 ,   KC_F9 ,  KC_F10 ,                     KC_LSTRT, KC_PRVWD, KC_NXTWD, KC_LEND , KC_PLUS , KC_EQUAL,
         XXXXXXX ,  KC_F11 ,  KC_F12 ,  KC_F13 ,  KC_F14 ,  KC_F15 ,                     KC_LEFT , KC_DOWN , KC_UP   , KC_RIGHT, KC_MINUS, KC_UNDS ,
         KC_CAPS , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , _______ , _______ , KC_LBRC , KC_RBRC , KC_LCBR , KC_RCBR , XXXXXXX , KC_CAPS ,
-                          _______ , _______ , _______ , TO(_BASE) , _______ , _______ , CG_TOGG , _______ , _______ , _______
+                          _______ , _______ , _______ , TO(_BASE) , _______ , _______ , _______ , _______ , _______ , _______
     ),
 };
 
@@ -193,8 +174,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 // }}}
 
-// {{{ Layers
-
 // {{{ Layer LEDs
 const rgblight_segment_t PROGMEM my_base_layer[] = RGBLIGHT_LAYER_SEGMENTS(
     {0, 12, HSV_OFF}
@@ -205,18 +184,13 @@ const rgblight_segment_t PROGMEM my_capslock_layer[] = RGBLIGHT_LAYER_SEGMENTS(
 );
 
 const rgblight_segment_t PROGMEM my_layer1_layer[] = RGBLIGHT_LAYER_SEGMENTS(
-    {0, 12, HSV_TEAL - 50}
-);
-
-const rgblight_segment_t PROGMEM my_layer2_layer[] = RGBLIGHT_LAYER_SEGMENTS(
     {0, 12, HSV_PURPLE - 50}
 );
 
 const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
     my_base_layer,
     my_capslock_layer,
-    my_layer1_layer,
-    my_layer2_layer
+    my_layer1_layer
 );
 
 void choose_layer(void) {
@@ -239,95 +213,6 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     choose_layer();
     return state;
 }
-
-// }}}
-
-// }}}
-
-// {{{ Tap dance
-
-td_state_t cur_dance(tap_dance_state_t *state) {
-    if (state->count == 1) {
-        if (!state->pressed) return TD_SINGLE_TAP;
-        // Key has not been interrupted, but the key is still held. Means you want to send a 'HOLD'.
-        else return TD_SINGLE_HOLD;
-    } else if (state->count == 2) {
-        // TD_DOUBLE_SINGLE_TAP is to distinguish between typing "pepper", and actually wanting a double tap
-        // action when hitting 'pp'. Suggested use case for this return value is when you want to send two
-        // keystrokes of the key, and not the 'double tap' action/macro.
-        if (state->interrupted) return TD_DOUBLE_SINGLE_TAP;
-        else if (state->pressed) return TD_DOUBLE_HOLD;
-        else return TD_DOUBLE_TAP;
-    }
-
-    // Assumes no one is trying to type the same letter three times (at least not quickly).
-    // If your tap dance key is 'KC_W', and you want to type "www." quickly - then you will need to add
-    // an exception here to return a 'TD_TRIPLE_SINGLE_TAP', and define that enum just like 'TD_DOUBLE_SINGLE_TAP'
-    if (state->count == 3) {
-        if (state->interrupted || !state->pressed) return TD_TRIPLE_TAP;
-        else return TD_TRIPLE_HOLD;
-    } else return TD_UNKNOWN;
-}
-
-// Create an instance of 'td_tap_t' for the left and right shift tap dances
-static td_tap_t lshtap_state = {
-    .is_press_action = true,
-    .state = TD_NONE
-};
-
-static td_tap_t rshtap_state = {
-    .is_press_action = true,
-    .state = TD_NONE
-};
-
-void lsh_finished(tap_dance_state_t *state, void *user_data) {
-    lshtap_state.state = cur_dance(state);
-    switch (lshtap_state.state) {
-        case TD_SINGLE_HOLD: register_code(KC_LSFT); break;
-        case TD_SINGLE_TAP: register_code16(KC_LPRN); break;
-        case TD_DOUBLE_TAP: register_code16(KC_LCBR); break;
-        case TD_TRIPLE_TAP: register_code(KC_LBRC); break;
-        default: break;
-    }
-}
-
-void lsh_reset(tap_dance_state_t *state, void *user_data) {
-    switch (lshtap_state.state) {
-        case TD_SINGLE_HOLD: unregister_code(KC_LSFT); break;
-        case TD_SINGLE_TAP: unregister_code16(KC_LPRN); break;
-        case TD_DOUBLE_TAP: unregister_code16(KC_LCBR); break;
-        case TD_TRIPLE_TAP: unregister_code(KC_LBRC); break;
-        default: break;
-    }
-    lshtap_state.state = TD_NONE;
-}
-
-void rsh_finished(tap_dance_state_t *state, void *user_data) {
-    rshtap_state.state = cur_dance(state);
-    switch (rshtap_state.state) {
-        case TD_SINGLE_HOLD: register_code(KC_RSFT); break;
-        case TD_SINGLE_TAP: register_code16(KC_RPRN); break;
-        case TD_DOUBLE_TAP: register_code16(KC_RCBR); break;
-        case TD_TRIPLE_TAP: register_code(KC_RBRC); break;
-        default: break;
-    }
-}
-
-void rsh_reset(tap_dance_state_t *state, void *user_data) {
-    switch (rshtap_state.state) {
-        case TD_SINGLE_HOLD: unregister_code(KC_RSFT); break;
-        case TD_SINGLE_TAP: unregister_code16(KC_RPRN); break;
-        case TD_DOUBLE_TAP: unregister_code16(KC_RCBR); break;
-        case TD_TRIPLE_TAP: unregister_code(KC_RBRC); break;
-        default: break;
-    }
-    rshtap_state.state = TD_NONE;
-}
-
-tap_dance_action_t tap_dance_actions[] = {
-    [TD_LS] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lsh_finished, lsh_reset),
-    [TD_RS] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, rsh_finished, rsh_reset)
-};
 
 // }}}
 
