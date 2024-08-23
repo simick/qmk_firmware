@@ -6,8 +6,6 @@
 
 #define OLED_FONT_H "qmkapplefont.c"
 
-#define BOTH_SHIFTS_TURNS_ON_CAPS_WORD
-
 #define TAPPING_TERM 175
 
 // two taps to activate the TT() layer tap-toggle

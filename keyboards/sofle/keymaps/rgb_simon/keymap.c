@@ -4,7 +4,7 @@
 #include QMK_KEYBOARD_H
 
 // Helper macros
-#define IS_MACOS !keymap_config.swap_lctl_lgui
+bool is_macos = true;
 
 // {{{ Definitions
 enum sofle_layers {
@@ -14,11 +14,13 @@ enum sofle_layers {
 };
 
 enum custom_keycodes {
-    KC_PRVWD = QK_USER,
+    KC_MACLNX = QK_USER,
+    KC_PRVWD,
     KC_NXTWD,
     KC_LSTRT,
     KC_LEND,
-    KC_LOCK
+    KC_LOCK,
+    KC_EMDS
 };
 
 // Tap Dance keycodes
@@ -96,28 +98,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB ,      KC_Q ,        KC_W ,        KC_E ,        KC_R ,      KC_T ,                            KC_Y ,        KC_U ,        KC_I ,        KC_O ,    KC_P ,  KC_GRV ,
         KC_BSLS ,     KC_A ,        KC_S ,        KC_D ,        KC_F ,      KC_G ,                            KC_H ,        KC_J ,        KC_K ,        KC_L , KC_SCLN , KC_QUOT ,
         TD(LSFT_PAR) , KC_Z ,        KC_X ,        KC_C ,        KC_V ,      KC_B , KC_MUTE , KC_LOCK ,        KC_N ,        KC_M ,     KC_COMM ,      KC_DOT , KC_SLSH , TD(RSFT_PAR),
-                             TD(LGUI_CBR) , TD(LALT_BRC) , TD(LCTL_QUT) , TT(_RAISE),  KC_SPC ,  KC_ENT , TD(MEH_TMUX) , TD(RCTL_DQT) , TD(RALT_BRC) , TD(RGUI_CBR)
+        TD(LGUI_CBR) , TD(LALT_BRC) , TD(LCTL_QUT) , TT(_RAISE),  KC_SPC ,  KC_ENT , TD(MEH_TMUX) , TD(RCTL_DQT) , TD(RALT_BRC) , TD(RGUI_CBR)
     ),
     /* RAISE
  * ,-----------------------------------------.                    ,-----------------------------------------.
- * | ESC  |  F1  |  F2  |  F3  |  F4  |  F5  |                    | Home | PgDn | PgUp |  End |  Ins |  Del |
+ * |MACLNX|  F1  |  F2  |  F3  |  F4  |  F5  |                    | Home | PgDn | PgUp |  End |  Ins |  Del |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * | Tab  |  F6  |  F7  |  F8  |  F9  |  F10 |                    | LStt | PrWd | NxWd | LEnd |   +  |   =  |
  * |------+------+------+------+------+------|                    |------+------+------+------+------+------|
  * |      |  F11 |  F12 |  F13 |  F14 |  F15 |-------.    ,-------| Left | Down |  Up  | Rght |   -  |   _  |
  * |------+------+------+------+------+------|  MUTE |    |  LOCK |------+------+------+------+------+------|
- * | Caps |      |      |      |      |      |-------|    |-------|   [  |   ]  |   {  |   }  |      | Caps |
+ * | Cword|      |      |      |      |      |-------|    |-------|   [  |   ]  |   {  |   }  |   —  | Caps |
  * `-----------------------------------------/       /     \      \-----------------------------------------'
- *            | LGUI | LAlt | LCTR |RAISE | /Space  /       \Enter \  |MACWIN| RCTR | RAlt | RGUI |
+ *            | LGUI | LAlt | LCTR |RAISE | /Space  /       \Enter \  |      | RCTR | RAlt | RGUI |
  *            |      |      |      |      |/       /         \      \ |      |      |      |      |
  *            `----------------------------------'           '------''---------------------------'
  */
     [_RAISE] = LAYOUT(
-        CG_TOGG ,   KC_F1 ,   KC_F2 ,   KC_F3 ,   KC_F4 ,   KC_F5 ,                     KC_HOME , KC_PGDN , KC_PGUP ,  KC_END ,  KC_INS ,  KC_DEL ,
+        KC_MACLNX ,   KC_F1 ,   KC_F2 ,   KC_F3 ,   KC_F4 ,   KC_F5 ,                     KC_HOME , KC_PGDN , KC_PGUP ,  KC_END ,  KC_INS ,  KC_DEL ,
         _______ ,   KC_F6 ,   KC_F7 ,   KC_F8 ,   KC_F9 ,  KC_F10 ,                     KC_LSTRT, KC_PRVWD, KC_NXTWD, KC_LEND , KC_PLUS , KC_EQUAL,
         XXXXXXX ,  KC_F11 ,  KC_F12 ,  KC_F13 ,  KC_F14 ,  KC_F15 ,                     KC_LEFT , KC_DOWN , KC_UP   , KC_RIGHT, KC_MINUS, KC_UNDS ,
-        KC_CAPS , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , _______ , _______ , KC_LBRC , KC_RBRC , KC_LCBR , KC_RCBR , XXXXXXX , KC_CAPS ,
-                          _______ , _______ , _______ , TO(_BASE) , _______ , _______ , _______ , _______ , _______ , _______
+        CW_TOGG , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , _______ , _______ , KC_LBRC , KC_RBRC , KC_LCBR , KC_RCBR , KC_EMDS , KC_CAPS ,
+        _______ , _______ , _______ , TO(_BASE) , _______ , _______ , _______ , _______ , _______ , _______
     ),
 };
 
@@ -209,75 +211,93 @@ tap_dance_action_t tap_dance_actions[] = {
 // {{{ process_record_user
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case KC_PRVWD:
+        case KC_MACLNX:
             if (record->event.pressed) {
-                if (IS_MACOS) {
+                is_macos = !is_macos;
+            }
+            break;
+        case KC_EMDS:
+            if (record->event.pressed) {
+                register_mods(mod_config(MOD_LALT | MOD_LSFT));
+                register_code(KC_MINUS);
+            } else {
+                unregister_mods(mod_config(MOD_LALT | MOD_LSFT));
+                unregister_code(KC_MINUS);
+            }
+            break;
+        case KC_PRVWD:
+            if (is_macos) {
+                if (record->event.pressed) {
                     register_mods(mod_config(MOD_LALT));
                     register_code(KC_LEFT);
                 } else {
-                    register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_LEFT);
-                }
-            } else {
-                if (IS_MACOS) {
                     unregister_mods(mod_config(MOD_LALT));
                     unregister_code(KC_LEFT);
+                }
+            } else {
+                if (record->event.pressed) {
+                    register_code(KC_ESC);
+                    unregister_code(KC_ESC);
+                    register_code(KC_B);
                 } else {
-                    unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_LEFT);
+                    unregister_code(KC_B);
                 }
             }
             break;
         case KC_NXTWD:
-            if (record->event.pressed) {
-                if (IS_MACOS) {
+            if (is_macos) {
+                if (record->event.pressed) {
                     register_mods(mod_config(MOD_LALT));
                     register_code(KC_RIGHT);
                 } else {
-                    register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_RIGHT);
-                }
-            } else {
-                if (IS_MACOS) {
                     unregister_mods(mod_config(MOD_LALT));
                     unregister_code(KC_RIGHT);
+                }
+            } else {
+                if (record->event.pressed) {
+                    register_code(KC_ESC);
+                    unregister_code(KC_ESC);
+                    register_code(KC_F);
                 } else {
-                    unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_RIGHT);
+                    unregister_code(KC_F);
                 }
             }
             break;
         case KC_LSTRT:
-            if (record->event.pressed) {
-                if (IS_MACOS) {
+            if (is_macos) {
+                if (record->event.pressed) {
                     register_mods(mod_config(MOD_LGUI));
                     register_code(KC_LEFT);
                 } else {
-                    register_code(KC_HOME);
-                }
-            } else {
-                if (IS_MACOS) {
                     unregister_mods(mod_config(MOD_LGUI));
                     unregister_code(KC_LEFT);
+                }
+            } else {
+                if (record->event.pressed) {
+                    register_mods(MOD_LCTL);
+                    register_code(KC_A);
                 } else {
-                    unregister_code(KC_HOME);
+                    unregister_mods(MOD_LCTL);
+                    unregister_code(KC_A);
                 }
             }
             break;
         case KC_LEND:
-            if (record->event.pressed) {
-                if (IS_MACOS) {
+            if (is_macos) {
+                if (record->event.pressed) {
                     register_mods(mod_config(MOD_LGUI));
                     register_code(KC_RIGHT);
                 } else {
-                    register_code(KC_END);
-                }
-            } else {
-                if (IS_MACOS) {
                     unregister_mods(mod_config(MOD_LGUI));
                     unregister_code(KC_RIGHT);
+                }
+            } else {
+                if (record->event.pressed) {
+                    register_mods(MOD_LCTL);
+                    register_code(KC_E);
                 } else {
-                    unregister_code(KC_END);
+                    unregister_mods(MOD_LCTL);
+                    unregister_code(KC_E);
                 }
             }
             break;
@@ -340,17 +360,17 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 // {{{ OLED
 #ifdef OLED_ENABLE
 
-const char PROGMEM base_oled[] = {
-    0x97, 0x98, 0x9F, 0x9F, 0x9F,
-    0xB7, 0xB8, 0x9F, 0x9F, 0x9F
-};
-
-const char PROGMEM ly2_oled[] = {
-    0x99, 0x9A, 0x9F, 0x9F, 0x9F,
-    0xB9, 0xBA, 0x9F, 0x9F, 0x9F
-};
-
 void render_status(void) {
+    static const char PROGMEM base_oled[] = {
+        0x95, 0x96, 0x97, 0x98, 0x9F,
+        0xB5, 0xB6, 0xB7, 0xB8, 0x9F
+    };
+
+    static const char PROGMEM raise_oled[] = {
+        0x95, 0x96, 0x99, 0x9A, 0x9F,
+        0xB5, 0xB6, 0xB9, 0xBA, 0x9F
+    };
+
     // Host Keyboard Layer Status
     oled_write_P(PSTR("Layer\n"), false);
 
@@ -359,40 +379,43 @@ void render_status(void) {
             oled_write_P(base_oled, false);
             break;
         case _RAISE:
-            oled_write_P(ly2_oled, false);
+            oled_write_P(raise_oled, false);
             break;
         default:
             // Or use the write_ln shortcut over adding '\n' to the end of your string
             oled_write_ln_P(PSTR("Undef\n"), false);
     }
+    oled_write_P(PSTR("\n"), false);
 
     // Host Keyboard LED Status
     bool caps_on = host_keyboard_led_state().caps_lock || is_caps_word_on();
-    oled_write_P(caps_on ? PSTR("CAP  \n") : PSTR("     \n"), false);
+    oled_write_P(caps_on ? PSTR("CAPS \n") : PSTR("     \n"), false);
 }
 
-const char PROGMEM macos_logo[] = {
-    0x80, 0x81, 0x82, 0x83, 0x84,
-    0xA0, 0xA1, 0xA2, 0xA3, 0xA4,
-    0xC0, 0xC1, 0xC2, 0xC3, 0xC4,
-    0x8A, 0x8B, 0x8C, 0x8D, 0x8E,
-    0xAA, 0xAB, 0xAC, 0xAD, 0xAE
-};
-
-const char PROGMEM linux_logo[] = {
-    0x85, 0x86, 0x87, 0x88, 0x89,
-    0xA5, 0xA6, 0xA7, 0xA8, 0xA9,
-    0xC5, 0xC6, 0xC7, 0xCC, 0xC9,
-    0x8F, 0x90, 0x91, 0x92, 0x93,
-    0xAF, 0xB0, 0xB1, 0xB2, 0xB3
-};
-
 void render_os(void) {
-    if (IS_MACOS) {
+    static const char PROGMEM inux_logo[] = {
+        0x85, 0x86, 0x87, 0x88, 0x89,
+        0xA5, 0xA6, 0xA7, 0xA8, 0xA9,
+        0xC5, 0xC6, 0xC7, 0xC8, 0xC9,
+        0x8F, 0x90, 0x91, 0x92, 0x93,
+        0xAF, 0xB0, 0xB1, 0xB2, 0xB3
+    };
+
+    static const char PROGMEM macos_logo[] = {
+        0x80, 0x81, 0x82, 0x83, 0x84,
+        0xA0, 0xA1, 0xA2, 0xA3, 0xA4,
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4,
+        0x8A, 0x8B, 0x8C, 0x8D, 0x8E,
+        0xAA, 0xAB, 0xAC, 0xAD, 0xAE
+    };
+
+    if (is_macos) {
         oled_write_P(macos_logo, false);
+        oled_write_P(PSTR("\n MAC "), false);
         // oled_write_ln_P(PSTR("MACOS\n"), false);
     } else {
-        oled_write_P(linux_logo, false);
+        oled_write_P(inux_logo, false);
+        oled_write_P(PSTR("\nLINUX"), false);
         // oled_write_ln_P(PSTR("LINUX\n"), false);
     }
 }
@@ -406,7 +429,6 @@ bool oled_task_user(void) {
         render_status();  // Renders the current keyboard state (layer, lock, caps, scroll, etc)
     } else {
         render_os();  // Renders a static logo
-        // oled_scroll_left();  // Turns on scrolling
     }
 
     return false;
