@@ -6,18 +6,6 @@
 // Helper macros
 #define IS_MACOS !keymap_config.swap_lctl_lgui
 
-#define MT_LSHF_PAR MT(MOD_LSFT, KC_LPRN)
-#define MT_RSHF_PAR MT(MOD_RSFT, KC_RPRN)
-#define MT_LGUI_CBR MT(MOD_LGUI, KC_LCBR)
-#define MT_RGUI_CBR MT(MOD_RGUI, KC_RCBR)
-#define MT_LALT_BRC MT(MOD_LALT, KC_RBRC)
-#define MT_RALT_BRC MT(MOD_RALT, KC_LBRC)
-#define MT_LCTL_QUT MT(MOD_LCTL, KC_QUOT)
-#define MT_RCTL_QUT MT(MOD_RCTL, KC_DQT)
-
-// mod-tap MEH + Ctrl-X (Tmux prefix)
-#define MT_MEH_TMUX MT(MOD_MEH, C(KC_X))
-
 // {{{ Definitions
 enum sofle_layers {
     /* _M_XYZ = Mac Os, _W_XYZ = Win/Linux */
@@ -32,6 +20,56 @@ enum custom_keycodes {
     KC_LEND,
     KC_LOCK
 };
+
+// Tap Dance keycodes
+enum td_keycodes {
+    LSFT_PAR,
+    RSFT_PAR,
+    LGUI_CBR,
+    RGUI_CBR,
+    LALT_BRC,
+    RALT_BRC,
+    LCTL_QUT,
+    RCTL_DQT,
+    MEH_TMUX
+};
+
+// Define a type containing as many tapdance states as you need
+typedef enum {
+    TD_NONE,
+    TD_UNKNOWN,
+    TD_SINGLE_TAP,
+    TD_SINGLE_HOLD,
+    TD_DOUBLE_SINGLE_TAP
+} td_state_t;
+
+// Create a global instance of the tapdance state type
+static td_state_t td_state;
+
+// Declare your tapdance functions:
+
+// Function to determine the current tapdance state
+td_state_t cur_dance(tap_dance_state_t *state);
+
+// `finished` and `reset` functions for each tapdance keycode
+void lsft_par_finished(tap_dance_state_t *state, void *user_data);
+void lsft_par_reset(tap_dance_state_t *state, void *user_data);
+void rsft_par_finished(tap_dance_state_t *state, void *user_data);
+void rsft_par_reset(tap_dance_state_t *state, void *user_data);
+void lgui_cbr_finished(tap_dance_state_t *state, void *user_data);
+void lgui_cbr_reset(tap_dance_state_t *state, void *user_data);
+void rgui_cbr_finished(tap_dance_state_t *state, void *user_data);
+void rgui_cbr_reset(tap_dance_state_t *state, void *user_data);
+void lalt_brc_finished(tap_dance_state_t *state, void *user_data);
+void lalt_brc_reset(tap_dance_state_t *state, void *user_data);
+void ralt_brc_finished(tap_dance_state_t *state, void *user_data);
+void ralt_brc_reset(tap_dance_state_t *state, void *user_data);
+void lctl_qut_finished(tap_dance_state_t *state, void *user_data);
+void lctl_qut_reset(tap_dance_state_t *state, void *user_data);
+void rctl_dqt_finished(tap_dance_state_t *state, void *user_data);
+void rctl_dqt_reset(tap_dance_state_t *state, void *user_data);
+void meh_tmux_finished(tap_dance_state_t *state, void *user_data);
+void meh_tmux_reset(tap_dance_state_t *state, void *user_data);
 
 // }}}
 
@@ -57,8 +95,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_ESC ,      KC_1 ,        KC_2 ,        KC_3 ,        KC_4 ,      KC_5 ,                            KC_6 ,        KC_7 ,        KC_8 ,        KC_9 ,    KC_0 , KC_BSPC ,
         KC_TAB ,      KC_Q ,        KC_W ,        KC_E ,        KC_R ,      KC_T ,                            KC_Y ,        KC_U ,        KC_I ,        KC_O ,    KC_P ,  KC_GRV ,
         KC_BSLS ,     KC_A ,        KC_S ,        KC_D ,        KC_F ,      KC_G ,                            KC_H ,        KC_J ,        KC_K ,        KC_L , KC_SCLN , KC_QUOT ,
-        MT_LSHF_PAR , KC_Z ,        KC_X ,        KC_C ,        KC_V ,      KC_B , KC_MUTE , KC_LOCK ,        KC_N ,        KC_M ,     KC_COMM ,      KC_DOT , KC_SLSH , MT_RSHF_PAR,
-                             MT_LGUI_CBR , MT_LALT_BRC , MT_LCTL_QUT , TT(_RAISE),  KC_SPC ,  KC_ENT , MT_MEH_TMUX , MT_RCTL_QUT , MT_RALT_BRC , MT_RGUI_CBR
+        TD(LSFT_PAR) , KC_Z ,        KC_X ,        KC_C ,        KC_V ,      KC_B , KC_MUTE , KC_LOCK ,        KC_N ,        KC_M ,     KC_COMM ,      KC_DOT , KC_SLSH , TD(RSFT_PAR),
+                             TD(LGUI_CBR) , TD(LALT_BRC) , TD(LCTL_QUT) , TT(_RAISE),  KC_SPC ,  KC_ENT , TD(MEH_TMUX) , TD(RCTL_DQT) , TD(RALT_BRC) , TD(RGUI_CBR)
     ),
     /* RAISE
  * ,-----------------------------------------.                    ,-----------------------------------------.
@@ -81,6 +119,89 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_CAPS , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , XXXXXXX , _______ , _______ , KC_LBRC , KC_RBRC , KC_LCBR , KC_RCBR , XXXXXXX , KC_CAPS ,
                           _______ , _______ , _______ , TO(_BASE) , _______ , _______ , _______ , _______ , _______ , _______
     ),
+};
+
+// }}}
+
+// {{{ tap Dance
+
+// Determine the tapdance state to return
+td_state_t cur_dance(tap_dance_state_t *state) {
+    if (state->count == 1) {
+        if (!state->pressed) return TD_SINGLE_TAP;
+        else return TD_SINGLE_HOLD;
+    }
+
+    if (state->count == 2) return TD_DOUBLE_SINGLE_TAP;
+    else return TD_UNKNOWN; // Any number higher than the maximum state value you return above
+}
+
+#define TD_FINISHED(name, hold, tap) \
+void name##_finished(tap_dance_state_t *state, void *user_data) { \
+    td_state = cur_dance(state); \
+    switch (td_state) { \
+        case TD_SINGLE_TAP: \
+            register_code16(tap); \
+            break; \
+        case TD_SINGLE_HOLD: \
+            register_mods(MOD_BIT(hold)); \
+            break; \
+        case TD_DOUBLE_SINGLE_TAP: \
+            tap_code16(tap); \
+            register_code16(tap); \
+            break; \
+        default: \
+            break; \
+    } \
+}
+
+#define TD_RESET(name, hold, tap) \
+void name##_reset(tap_dance_state_t *state, void *user_data) { \
+    switch (td_state) { \
+        case TD_SINGLE_TAP: \
+            unregister_code16(tap); \
+            break; \
+        case TD_SINGLE_HOLD: \
+            unregister_mods(MOD_BIT(hold)); \
+            break; \
+        case TD_DOUBLE_SINGLE_TAP: \
+            unregister_code16(tap); \
+            break; \
+        default: \
+            break; \
+    } \
+}
+
+TD_FINISHED(lsft_par, KC_LSFT, KC_LPRN)
+TD_FINISHED(rsft_par, KC_RSFT, KC_RPRN)
+TD_FINISHED(lgui_cbr, KC_LGUI, KC_LCBR)
+TD_FINISHED(rgui_cbr, KC_RGUI, KC_RCBR)
+TD_FINISHED(lalt_brc, KC_LALT, KC_LBRC)
+TD_FINISHED(ralt_brc, KC_RALT, KC_RBRC)
+TD_FINISHED(lctl_qut, KC_LCTL, KC_QUOT)
+TD_FINISHED(rctl_dqt, KC_RCTL, KC_DQT)
+TD_FINISHED(meh_tmux, KC_MEH, C(KC_X))
+TD_RESET(lsft_par, KC_LSFT, KC_LPRN)
+TD_RESET(rsft_par, KC_RSFT, KC_RPRN)
+TD_RESET(lgui_cbr, KC_LGUI, KC_LCBR)
+TD_RESET(rgui_cbr, KC_RGUI, KC_RCBR)
+TD_RESET(lalt_brc, KC_LALT, KC_LBRC)
+TD_RESET(ralt_brc, KC_RALT, KC_RBRC)
+TD_RESET(lctl_qut, KC_LCTL, KC_QUOT)
+TD_RESET(rctl_dqt, KC_RCTL, KC_DQT)
+TD_RESET(meh_tmux, KC_MEH, C(KC_X))
+
+// Define `ACTION_TAP_DANCE_FN_ADVANCED()` for each tapdance keycode, passing in `finished` and `reset` functions
+tap_dance_action_t tap_dance_actions[] = {
+    [LSFT_PAR] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lsft_par_finished, lsft_par_reset),
+    [RSFT_PAR] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, rsft_par_finished, rsft_par_reset),
+    [LGUI_CBR] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lgui_cbr_finished, lgui_cbr_reset),
+    [RGUI_CBR] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, rgui_cbr_finished, rgui_cbr_reset),
+    [LALT_BRC] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lalt_brc_finished, lalt_brc_reset),
+    [RALT_BRC] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, ralt_brc_finished, ralt_brc_reset),
+    [LCTL_QUT] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, lctl_qut_finished, lctl_qut_reset),
+    [RCTL_DQT] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, rctl_dqt_finished, rctl_dqt_reset),
+    [MEH_TMUX] = ACTION_TAP_DANCE_FN_ADVANCED(NULL, meh_tmux_finished, meh_tmux_reset)
 };
 
 // }}}
