@@ -10,7 +10,8 @@
 
 // two taps to activate the TT() layer tap-toggle
 #define TAPPING_TOGGLE 2
-#define PERMISSIVE_HOLD
+#define HOLD_ON_OTHER_KEY_PRESS
+// #define PERMISSIVE_HOLD
 
 #define CAPS_WORD_IDLE_TIMEOUT 3000
 
